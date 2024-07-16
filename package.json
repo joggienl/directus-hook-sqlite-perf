@@ -2,7 +2,7 @@
 	"name": "directus-hook-sqlite-perf",
 	"description": "A simple Directus hook that loads some SQLite performance settings into each connection",
 	"icon": "extension",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"license": "MIT",
 	"author": {
 		"email": "jogchum@clevercactus.dev",
