@@ -1,0 +1,39 @@
+#
+# This is a simple docker-compose file that allows to develop the extension.
+#
+
+name: dhsp
+
+services:
+
+  # Directus!
+  # @see: https://docs.directus.io/self-hosted/config-options.html for all possible options
+  #       and see docs.directus.io in general for documentation on usage.
+  directus:
+
+    # If you want to build a custom image, comment out the line below:
+    image: directus/directus:10.13.1
+
+    # To build a custom image, comment out the line above and uncomment the two
+    # lines below. Note that the alignment needs to be at the same level as
+    # "image" now is.
+
+    # build:
+    #  context: build
+
+    restart: unless-stopped
+    ports:
+      - '8055:8055'
+    volumes:
+      - ./data/database:/directus/database
+      - ./data/extensions:/directus/extensions
+    environment:
+      SECRET: 'some-super-secret-here'
+      DB_CLIENT: 'sqlite3'
+      # Make sure that if you are in dev mode, the extension will auto reload!
+      EXTENSIONS_AUTO_RELOAD: 'true'
+      # Example of configuring the extension, uncomment to use:
+      # DHSP_JOURNAL_MODE: 'off'
+      # DHSP_SYNCHRONOUS: normal
+      # DHSP_TEMP_STORE: memory
+      # DHSP_MMAP_SIZE: 512000000

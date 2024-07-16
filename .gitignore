@@ -1,0 +1,23 @@
+# Misc.
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE's
+.idea
+.vscode
+
+# Environment files
+.env
+.env*.local
+
+# Application
+node_modules
+directus/data
+
+# Build
+dist

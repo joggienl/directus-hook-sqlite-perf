@@ -1,0 +1,40 @@
+{
+	"name": "directus-hook-sqlite-perf",
+	"description": "A simple Directus hook that loads some SQLite performance settings into each connection",
+	"icon": "extension",
+	"version": "1.0.0",
+	"license": "MIT",
+	"author": {
+		"email": "jogchum@clevercactus.dev",
+		"name": "Jogchum Koerts"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+ssh://git@github.com/joggienl/directus-hook-sqlite-perf.git"
+	},
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-extension-hook"
+	],
+	"type": "module",
+	"files": [
+		"dist",
+		"docs"
+	],
+	"directus:extension": {
+		"type": "hook",
+		"path": "dist/index.js",
+		"source": "src/index.js",
+		"host": "^10.10.0"
+	},
+	"scripts": {
+		"build": "directus-extension build",
+		"predev": "mkdir -p ./directus/data/extensions/directus-hook-sqlite-perf && cp package.json ./directus/data/extensions/directus-hook-sqlite-perf",
+		"dev": "directus-extension build -w --no-minify -i ./src/index.js -t hook -o ./directus/data/extensions/directus-hook-sqlite-perf/dist/index.js"
+	},
+	"devDependencies": {
+		"@directus/extensions-sdk": "11.0.9"
+	},
+	"packageManager": "npm@10.8.2+sha512.c7f0088c520a46596b85c6f8f1da943400199748a0f7ea8cb8df75469668dc26f6fb3ba26df87e2884a5ebe91557292d0f3db7d0929cdb4f14910c3032ac81fb"
+}

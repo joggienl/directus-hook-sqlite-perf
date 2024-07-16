@@ -1,0 +1,26 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# General rules for all files
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+indent_style = tab
+insert_final_newline = true
+max_line_length = 80
+trim_trailing_whitespace = true
+
+# Make sure to not trim whitespaces for markdown, they serve a purpose
+[*.md]
+trim_trailing_whitespace = false
+
+# No final new line for SVG files
+[*.svg]
+insert_final_newline = false
+
+# Make sure commit message body does not exceed 70 characters
+[COMMIT_EDITMSG]
+max_line_length = 70
