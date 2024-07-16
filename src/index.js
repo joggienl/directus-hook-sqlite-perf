@@ -47,13 +47,8 @@ export default async (_, {database, logger}) => {
 		// Great success!
 		logger.info('Successfully loaded perf settings for SQLite.')
 	} catch (error) {
-
-		console.log(error)
-
-		// Something went wrong. What was it?
+		// Something went wrong!
 		logger.error('Failed to set SQLite settings.')
-
-		console.log(error)
 
 		if (typeof error === 'string') {
 			logger.error(error)
@@ -61,6 +56,12 @@ export default async (_, {database, logger}) => {
 
 		if (error.message && typeof error.message === 'string') {
 			logger.error(error.message)
+		}
+
+		if (dhsp_debug) {
+			// Try to spit the actual error, might be an object so only
+			// do that in debug mode:
+			console.error(error)
 		}
 	} finally {
 		if (conn) {
