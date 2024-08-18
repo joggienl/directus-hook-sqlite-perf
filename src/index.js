@@ -67,7 +67,7 @@ function getPragmasFromEnv(env, logger) {
 		'busy_timeout',
 		env.DHSP_BUSY_TIMEOUT,
 		true,
-		DEFAULT_VALUES.busy_timeout,
+		PRAGMA_DEFAULT_VALUES.busy_timeout,
 	)
 
 	pushPragma(
@@ -75,24 +75,29 @@ function getPragmasFromEnv(env, logger) {
 		env.DHSP_JOURNAL_MODE &&
 			PRAGMA_VALUES.journal_mode.includes(env.DHSP_JOURNAL_MODE.toLowerCase())
 			? env.DHSP_JOURNAL_MODE
-			: DEFAULT_VALUES.journal_mode,
+			: PRAGMA_DEFAULT_VALUES.journal_mode,
 	)
 
 	pushPragma(
 		'journal_size',
 		env.DHSP_JOURNAL_SIZE,
 		true,
-		DEFAULT_VALUES.journal_size,
+		PRAGMA_DEFAULT_VALUES.journal_size,
 	)
 
-	pushPragma('cache_size', env.DHSP_CACHE_SIZE, true, DEFAULT_VALUES.cache_size)
+	pushPragma(
+		'cache_size',
+		env.DHSP_CACHE_SIZE,
+		true,
+		PRAGMA_DEFAULT_VALUES.cache_size,
+	)
 
 	pushPragma(
 		'synchronous',
 		env.DHSP_SYNCHRONOUS &&
 			PRAGMA_VALUES.synchronous.includes(env.DHSP_SYNCHRONOUS.toLowerCase())
 			? env.DHSP_SYNCHRONOUS
-			: DEFAULT_VALUES.synchronous,
+			: PRAGMA_DEFAULT_VALUES.synchronous,
 	)
 
 	pushPragma(
@@ -100,12 +105,22 @@ function getPragmasFromEnv(env, logger) {
 		env.DHSP_TEMP_STORE &&
 			PRAGMA_VALUES.temp_store.includes(env.DHSP_TEMP_STORE.toLowerCase())
 			? env.DHSP_TEMP_STORE
-			: DEFAULT_VALUES.temp_store,
+			: PRAGMA_DEFAULT_VALUES.temp_store,
 	)
 
-	pushPragma('mmap_size', env.DHSP_MMAP_SIZE, true, DEFAULT_VALUES.mmap_size)
+	pushPragma(
+		'mmap_size',
+		env.DHSP_MMAP_SIZE,
+		true,
+		PRAGMA_DEFAULT_VALUES.mmap_size,
+	)
 
-	pushPragma('page_size', env.DHSP_PAGE_SIZE, true, DEFAULT_VALUES.page_size)
+	pushPragma(
+		'page_size',
+		env.DHSP_PAGE_SIZE,
+		true,
+		PRAGMA_DEFAULT_VALUES.page_size,
+	)
 
 	return pragmas
 }
