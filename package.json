@@ -26,7 +26,7 @@
 		"type": "hook",
 		"path": "dist/index.js",
 		"source": "src/index.js",
-		"host": "^10.10.0"
+		"host": ">=10.10.0 <12.0.0"
 	},
 	"scripts": {
 		"build": "directus-extension build",
@@ -34,7 +34,15 @@
 		"dev": "directus-extension build -w --no-minify -i ./src/index.js -t hook -o ./directus/data/extensions/directus-hook-sqlite-perf/dist/index.js"
 	},
 	"devDependencies": {
-		"@directus/extensions-sdk": "11.0.9"
+		"@directus/extensions-sdk": "12.0.1",
+		"prettier": "3.3.3"
 	},
-	"packageManager": "npm@10.8.2+sha512.c7f0088c520a46596b85c6f8f1da943400199748a0f7ea8cb8df75469668dc26f6fb3ba26df87e2884a5ebe91557292d0f3db7d0929cdb4f14910c3032ac81fb"
+	"packageManager": "npm@10.8.2+sha512.c7f0088c520a46596b85c6f8f1da943400199748a0f7ea8cb8df75469668dc26f6fb3ba26df87e2884a5ebe91557292d0f3db7d0929cdb4f14910c3032ac81fb",
+	"prettier": {
+		"proseWrap": "always",
+		"semi": false,
+		"singleQuote": true,
+		"tabWidth": 4,
+		"useTabs": true
+	}
 }
