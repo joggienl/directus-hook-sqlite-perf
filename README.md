@@ -113,6 +113,25 @@ MARKETPLACE_TRUST=all
 
 ## Configuration
 
+To use multiple database connections to your SQLite database file make sure to
+set the following environment variables:
+
+```dotenv
+# Knex.js defaults to a min size of 1 to always keep 1 connection open.
+# Set it to 0 to allow 0 connetions.
+DB_POOL__MIN: 0
+
+# Set the max pool size. Play arround to see the limit for your system. For me
+# setting it to 4 works most of the time.
+DB_POOL__MAX: 4
+```
+
+**Important**: make sure to **not** set `PM2_INSTANCES` to a value higher then 1
+. Currently there is an issue with that.
+
+To tune this extension you can use the instructions below to modify the defaults
+for the SQLite pragmas that will be set by this extension.
+
 -   [Busy Timeout](#busy-timeout)
 -   [Journal Mode](#Journal-Mode)
 -   [Journal Size](#journal-size)
