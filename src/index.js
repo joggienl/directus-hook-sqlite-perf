@@ -164,6 +164,11 @@ export default async function (_, { database, logger, env }) {
 	// Skip if we are not using sqlite3.
 	if (database.client.config.client !== 'sqlite3') return
 
+	if (env['PM2_INSTANCES'] && env['PM2_INSTANCES'] > 1)
+		throw new Error(
+			'Multiple PM2 instances is currently not supported for this extension!\nSet PM2_INSTANCES to 1',
+		)
+
 	// Check the current configuration.
 	checkKnexConfig(database, logger)
 
