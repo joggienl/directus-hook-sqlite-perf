@@ -10,7 +10,10 @@ and use them effectively.
     -   [NPM, Docker and Docker Compose](#npm-docker-and-docker-compose)
     -   [Marketplace (not advised)](#marketplace-not-advised)
 -   [Configuration](#configuration)
+    -   [Busy Timeout](#busy-timeout)
     -   [Journal Mode](#Journal-Mode)
+    -   [Journal Size](#journal-size)
+    -   [Cache Size](#cache-size)
     -   [Synchronous Commit](#Synchronous-Commit)
     -   [Temporary files location](#Temporary-files-location)
     -   [Enable memory mapping](#Enable-memory-mapping)
@@ -109,6 +112,15 @@ MARKETPLACE_TRUST=all
 ```
 
 ## Configuration
+
+-   [Busy Timeout](#busy-timeout)
+-   [Journal Mode](#Journal-Mode)
+-   [Journal Size](#journal-size)
+-   [Cache Size](#cache-size)
+-   [Synchronous Commit](#Synchronous-Commit)
+-   [Temporary files location](#Temporary-files-location)
+-   [Enable memory mapping](#Enable-memory-mapping)
+-   [Increase the page size](#Increase-the-page-size)
 
 ### Busy timeout
 
