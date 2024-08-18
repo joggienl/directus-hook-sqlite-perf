@@ -3,7 +3,7 @@
 # it shows how it works this way (and makes this warning go away: "WARN:
 # Spatialite isn't installed. Geometry type support will be limited.")
 
-FROM directus/directus:10.13.1
+FROM directus/directus:11.0.2
 LABEL authors="Jogchum Koerts <jogchum@clevercactus.dev"
 
 USER root
@@ -16,4 +16,6 @@ EOF
 
 USER node
 
-RUN pnpm install directus-hook-sqlite-spatialite
+RUN pnpm install \
+    directus-hook-sqlite-spatialite@latest \
+    directus-hook-sqlite-perf@latest

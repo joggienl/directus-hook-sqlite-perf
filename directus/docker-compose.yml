@@ -12,13 +12,13 @@ services:
   directus:
 
     # If you want to build a custom image, comment out the line below:
-    image: directus/directus:10.13.1
+    image: directus/directus:11.0.2
 
     # To build a custom image, comment out the line above and uncomment the two
     # lines below. Note that the alignment needs to be at the same level as
     # "image" now is.
 
-    # build:
+    #build:
     #  context: build
 
     restart: unless-stopped
@@ -33,7 +33,10 @@ services:
       # Make sure that if you are in dev mode, the extension will auto reload!
       EXTENSIONS_AUTO_RELOAD: 'true'
       # Example of configuring the extension, uncomment to use:
-      # DHSP_JOURNAL_MODE: 'off'
+      # DHSP_BUSY_TIMEOUT: 30000
+      # DHSP_JOURNAL_MODE: wal
+      # DHSP_JOURNAL_SIZE: 5242880
+      # DHSP_CACHE_SIZE: -20000
       # DHSP_SYNCHRONOUS: normal
       # DHSP_TEMP_STORE: memory
       # DHSP_MMAP_SIZE: 512000000
