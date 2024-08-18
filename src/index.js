@@ -157,17 +157,28 @@ export default async (_, { database, logger, env }) => {
 
 	// Acquire our database pool
 	const pool = database.client.pool
-	const acquire = pool.acquire()
 
 	// Variable to store the connection
-	let conn
+	let connections = []
 
 	try {
 		// Get the actual connection from the acquired pool
 		conn = await acquire.promise
 
-		// Run the SQL commands!
-		setPragmasOnConnection(conn, env, logger)
+	try {
+		logger.debug(`try to acquire ${database.client.pool.max} connections!`)
+		for (let count = 0; count < database.client.pool.max; count += 1) {
+			const acquire = pool.acquire()
+			const conn = await acquire.promise
+			connections.push(conn)
+		}
+
+		// Set PRAGMA statements on each connection
+		for (const conn of connections) {
+			// Run the SQL commands for every connection we acquired!
+			await setPragmasOnConnection(conn, env, logger)
+			logger.debug('🔥 pragmas loaded!')
+		}
 
 		// Great success!
 		logger.info('Successfully loaded perf settings for SQLite.')
@@ -186,9 +197,11 @@ export default async (_, { database, logger, env }) => {
 			logger.error(error)
 		}
 	} finally {
-		if (conn) {
-			// Release the handle to our connection. Done!
-			pool.release(conn)
+		if (connections.length > 0) {
+			for (const conn of connections) {
+				// Release the handle to our connection. Done!
+				pool.release(conn)
+			}
 		}
 	}
 }
