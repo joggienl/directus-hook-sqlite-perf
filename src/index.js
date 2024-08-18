@@ -54,7 +54,9 @@ function getPragmasFromEnv(env, logger) {
 	const pushPragma = (key, value, numeric, defaultValue) => {
 		if (value) {
 			if (numeric && !isNumeric(value)) {
-				logger.error(`Please use a numeric value for ${key.toUpperCase()}`)
+				logger.error(
+					`Please use a numeric value for ${key.toUpperCase()}`,
+				)
 				value = defaultValue
 			}
 			pragmas.push(`PRAGMA ${key} = ${value};`)
@@ -73,7 +75,9 @@ function getPragmasFromEnv(env, logger) {
 	pushPragma(
 		'journal_mode',
 		env.DHSP_JOURNAL_MODE &&
-			PRAGMA_VALUES.journal_mode.includes(env.DHSP_JOURNAL_MODE.toLowerCase())
+			PRAGMA_VALUES.journal_mode.includes(
+				env.DHSP_JOURNAL_MODE.toLowerCase(),
+			)
 			? env.DHSP_JOURNAL_MODE
 			: PRAGMA_DEFAULT_VALUES.journal_mode,
 	)
@@ -95,7 +99,9 @@ function getPragmasFromEnv(env, logger) {
 	pushPragma(
 		'synchronous',
 		env.DHSP_SYNCHRONOUS &&
-			PRAGMA_VALUES.synchronous.includes(env.DHSP_SYNCHRONOUS.toLowerCase())
+			PRAGMA_VALUES.synchronous.includes(
+				env.DHSP_SYNCHRONOUS.toLowerCase(),
+			)
 			? env.DHSP_SYNCHRONOUS
 			: PRAGMA_DEFAULT_VALUES.synchronous,
 	)
