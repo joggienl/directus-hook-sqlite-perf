@@ -161,9 +161,16 @@ export default async (_, { database, logger, env }) => {
 	// Variable to store the connection
 	let connections = []
 
-	try {
-		// Get the actual connection from the acquired pool
-		conn = await acquire.promise
+	// Add an event handler to be executed by new connections
+	pool.on('createSuccess', async (eventId, resource) => {
+		logger.debug(`executing pragmas on new connection: ${eventId}`)
+		try {
+			await setPragmasOnConnection(resource, env, logger)
+			logger.debug('🔥 pragmas loaded!')
+		} catch (error) {
+			logger.error(error)
+		}
+	})
 
 	try {
 		logger.debug(`try to acquire ${database.client.pool.max} connections!`)
