@@ -128,20 +128,13 @@ export default async (_, {database, logger, env}) => {
 	// Skip we are not using sqlite3;
 	if (database.client.config.client !== 'sqlite3') return
 
-	// Get values or set defaults for the settings we want to set;
-	const journalMode = process.env.DHSP_JOURNAL_MODE || 'wal'
-	const synchronous = process.env.DHSP_SYNCHRONOUS || 'normal'
-	const tempStore = process.env.DHSP_TEMP_STORE || 'memory'
-	const mmapSize = process.env.DHSP_MMAP_SIZE || '512000000'
-	const pageSize = process.env.DHSP_PAGE_SIZE || false
-
-	// Get debug mode;
-	const dhsp_debug = process.env.DHSP_DEBUG === 'true' ||
-		process.env.DHSP_DEBUG === true ||
-		process.env.DHSP_DEBUG === 1
-
 	// Check the current configuration
 	checkKnexConfig(database, logger)
+
+	// Get values or set defaults for the settings we want to set;
+	const pragmas = getPragmasFromEnv(env, logger)
+
+	logger.debug(pragmas)
 
 	// Acquire our database pool
 	const pool = database.client.pool
@@ -155,23 +148,14 @@ export default async (_, {database, logger, env}) => {
 		conn = await acquire.promise
 
 		// Run the SQL commands!
-		if (dhsp_debug) logger.info(`set journal_mode to ${journalMode}`)
-		await conn.run(`pragma journal_mode = ${journalMode}`)
-
-		if (dhsp_debug) logger.info(`set synchronous to ${synchronous}`)
-		await conn.run(`pragma synchronous = ${synchronous}`)
-
-		if (dhsp_debug) logger.info(`set temp_store to ${tempStore}`)
-		await conn.run(`pragma temp_store = ${tempStore}`)
-
-		if (dhsp_debug) logger.info(`set mmap_size to ${mmapSize}`)
-		await conn.run(`pragma mmap_size = ${mmapSize}`)
-
-		if (pageSize) {
-			// Only run this command if we got page_size from the environment
-			if (dhsp_debug) logger.info(`set page_size to ${pageSize}`)
-			await conn.run(`pragma page_size = ${pageSize}`)
-		}
+		await Promise.all(pragmas.map((pragma) => {
+			return new Promise((resolve, reject) => {
+				conn.run(pragma, (error) => {
+					if (error) reject(error);
+					else resolve();
+				});
+			})
+		}))
 
 		// Great success!
 		logger.info('Successfully loaded perf settings for SQLite.')
@@ -185,12 +169,9 @@ export default async (_, {database, logger, env}) => {
 
 		if (error.message && typeof error.message === 'string') {
 			logger.error(error.message)
-		}
-
-		if (dhsp_debug) {
-			// Try to spit the actual error, might be an object so only
-			// do that in debug mode:
-			console.error(error)
+		} else {
+			// Just try to log it.
+			logger.error(error)
 		}
 	} finally {
 		if (conn) {
