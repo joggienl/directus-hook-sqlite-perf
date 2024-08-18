@@ -1,23 +1,31 @@
-/** @typedef {import('knex').Knex} Knex */
+import { promisify } from 'node:util'
 
+/** @typedef {import('knex').Knex} Knex */
+/**
+ * Checks if a given value is numeric.
+ * @param {any} value - Value to check.
+ * @return {boolean} - True if the value is numeric, otherwise false.
+ */
 function isNumeric(value) {
 	const valueAsNumber = Number(value)
-	return !isNaN(Number(valueAsNumber)) && typeof valueAsNumber === 'number'
+	return !isNaN(valueAsNumber)
 }
 
 /**
- * Check the Knex config for some settings and give warnings for known
- * improvements or warnings.for some sanity. Returns nothing.
+ * Check the Knex config for some settings and give warnings for known improvements or warnings for some sanity.
  * @param {Knex} knex - Knex instance.
- * @return void
+ * @param {Object} logger - Logger instance.
+ * @returns {void}
  */
 function checkKnexConfig(knex, logger) {
-	if (knex.client.pool.min !== 0) {
+	const MIN_POOL = 0
+	const MAX_POOL = 1
+	if (knex.client.pool.min !== MIN_POOL) {
 		logger.warn(
 			'Suggestion: set DB_POOL__MIN to 0 to make sure unused connections are cleared',
 		)
 	}
-	if (knex.client.pool.max > 1) {
+	if (knex.client.pool.max > MAX_POOL) {
 		logger.info(
 			'If you see SQLITE_BUSY errors consider setting DB_POOL__MAX to 1 to prevent those.',
 		)
@@ -26,20 +34,17 @@ function checkKnexConfig(knex, logger) {
 
 /**
  * Get an array with pragmas to execute on the database.
- * Returns an array with statements to execute.
- *
- * @param env
- * @returns {String[]}
+ * @param {Object} env - Environment variables.
+ * @param {Object} logger - Logger instance.
+ * @returns {String[]} - Array of SQL pragma statements.
  */
 function getPragmasFromEnv(env, logger) {
 	const pragmas = []
-
 	const PRAGMA_VALUES = {
 		journal_mode: ['delete', 'truncate', 'persist', 'memory', 'wal', 'off'],
 		synchronous: ['off', 'normal', 'full', 'extra'],
 		temp_store: ['default', 'file', 'memory'],
 	}
-
 	const PRAGMA_DEFAULT_VALUES = {
 		busy_timeout: 30000,
 		journal_mode: 'wal',
@@ -51,9 +56,9 @@ function getPragmasFromEnv(env, logger) {
 		page_size: undefined, // No default
 	}
 
-	const pushPragma = (key, value, numeric, defaultValue) => {
-		if (value) {
-			if (numeric && !isNumeric(value)) {
+	const pushPragma = (key, value, isNumericFlag, defaultValue) => {
+		if (value !== undefined) {
+			if (isNumericFlag && !isNumeric(value)) {
 				logger.error(
 					`Please use a numeric value for ${key.toUpperCase()}`,
 				)
@@ -71,7 +76,6 @@ function getPragmasFromEnv(env, logger) {
 		true,
 		PRAGMA_DEFAULT_VALUES.busy_timeout,
 	)
-
 	pushPragma(
 		'journal_mode',
 		env.DHSP_JOURNAL_MODE &&
@@ -81,21 +85,18 @@ function getPragmasFromEnv(env, logger) {
 			? env.DHSP_JOURNAL_MODE
 			: PRAGMA_DEFAULT_VALUES.journal_mode,
 	)
-
 	pushPragma(
 		'journal_size',
 		env.DHSP_JOURNAL_SIZE,
 		true,
 		PRAGMA_DEFAULT_VALUES.journal_size,
 	)
-
 	pushPragma(
 		'cache_size',
 		env.DHSP_CACHE_SIZE,
 		true,
 		PRAGMA_DEFAULT_VALUES.cache_size,
 	)
-
 	pushPragma(
 		'synchronous',
 		env.DHSP_SYNCHRONOUS &&
@@ -105,7 +106,6 @@ function getPragmasFromEnv(env, logger) {
 			? env.DHSP_SYNCHRONOUS
 			: PRAGMA_DEFAULT_VALUES.synchronous,
 	)
-
 	pushPragma(
 		'temp_store',
 		env.DHSP_TEMP_STORE &&
@@ -113,14 +113,12 @@ function getPragmasFromEnv(env, logger) {
 			? env.DHSP_TEMP_STORE
 			: PRAGMA_DEFAULT_VALUES.temp_store,
 	)
-
 	pushPragma(
 		'mmap_size',
 		env.DHSP_MMAP_SIZE,
 		true,
 		PRAGMA_DEFAULT_VALUES.mmap_size,
 	)
-
 	pushPragma(
 		'page_size',
 		env.DHSP_PAGE_SIZE,
@@ -131,37 +129,48 @@ function getPragmasFromEnv(env, logger) {
 	return pragmas
 }
 
+/**
+ * Sets pragma statements on a database connection.
+ * @param {Object} connection - Database connection.
+ * @param {Object} env - Environment variables.
+ * @param {Object} logger - Logger instance.
+ * @returns {Promise<void>}
+ */
 async function setPragmasOnConnection(connection, env, logger) {
 	const pragmas = getPragmasFromEnv(env, logger)
-
 	logger.debug(pragmas)
+	const runAsync = promisify(connection.run.bind(connection))
 
-	return await Promise.all(
-		pragmas.map((pragma) => {
-			return new Promise((resolve, reject) => {
-				connection.run(pragma, (error) => {
-					if (error) reject(error)
-					else resolve()
-				})
-			})
-		}),
-	)
+	for (const pragma of pragmas) {
+		try {
+			await runAsync(pragma)
+		} catch (error) {
+			logger.error(error)
+			throw error
+		}
+	}
 }
 
-export default async (_, { database, logger, env }) => {
-	// Skip we are not using sqlite3.
+/**
+ * Main function for setting up SQLite pragmas.
+ * @param {Object} _ - Unused first argument.
+ * @param {Object} params - Parameters.
+ * @param {Object} params.database - Database object.
+ * @param {Object} params.logger - Logger object.
+ * @param {Object} params.env - Environment variables.
+ * @returns {Promise<void>}
+ */
+export default async function (_, { database, logger, env }) {
+	// Skip if we are not using sqlite3.
 	if (database.client.config.client !== 'sqlite3') return
 
-	// Check the current configuration
+	// Check the current configuration.
 	checkKnexConfig(database, logger)
 
-	// Acquire our database pool
 	const pool = database.client.pool
+	const connections = []
 
-	// Variable to store the connection
-	let connections = []
-
-	// Add an event handler to be executed by new connections
+	// Add event handler for new connections.
 	pool.on('createSuccess', async (eventId, resource) => {
 		logger.debug(`executing pragmas on new connection: ${eventId}`)
 		try {
@@ -180,35 +189,20 @@ export default async (_, { database, logger, env }) => {
 			connections.push(conn)
 		}
 
-		// Set PRAGMA statements on each connection
+		// Set PRAGMA statements on each connection.
 		for (const conn of connections) {
-			// Run the SQL commands for every connection we acquired!
 			await setPragmasOnConnection(conn, env, logger)
-			logger.debug('🔥 pragmas loaded!')
 		}
-
-		// Great success!
+		logger.debug('🔥 pragmas loaded!')
 		logger.info('Successfully loaded perf settings for SQLite.')
 	} catch (error) {
-		// Something went wrong!
+		// Handle the error.
 		logger.error('Failed to set SQLite settings.')
-
-		if (typeof error === 'string') {
-			logger.error(error)
-		}
-
-		if (error.message && typeof error.message === 'string') {
-			logger.error(error.message)
-		} else {
-			// Just try to log it.
-			logger.error(error)
-		}
+		logger.error(error instanceof Error ? error.message : error)
 	} finally {
-		if (connections.length > 0) {
-			for (const conn of connections) {
-				// Release the handle to our connection. Done!
-				pool.release(conn)
-			}
+		// Release connections.
+		for (const conn of connections) {
+			pool.release(conn)
 		}
 	}
 }
