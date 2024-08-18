@@ -13,10 +13,14 @@ function isNumeric(value) {
  */
 function checkKnexConfig(knex, logger) {
 	if (knex.client.pool.min !== 0) {
-		logger.warn('Suggestion: set DB_POOL__MIN to 0 to make sure unused connections are cleared')
+		logger.warn(
+			'Suggestion: set DB_POOL__MIN to 0 to make sure unused connections are cleared',
+		)
 	}
 	if (knex.client.pool.max > 1) {
-		logger.info('If you see SQLITE_BUSY errors consider setting DB_POOL__MAX to 1 to prevent those.')
+		logger.info(
+			'If you see SQLITE_BUSY errors consider setting DB_POOL__MAX to 1 to prevent those.',
+		)
 	}
 }
 
@@ -31,9 +35,9 @@ function getPragmasFromEnv(env, logger) {
 	const pragmas = []
 
 	const PRAGMA_VALUES = {
-		'journal_mode': ['delete', 'truncate', 'persist', 'memory', 'wal', 'off'],
-		'synchronous': ['off', 'normal', 'full', 'extra'],
-		'temp_store': ['default', 'file', 'memory'],
+		journal_mode: ['delete', 'truncate', 'persist', 'memory', 'wal', 'off'],
+		synchronous: ['off', 'normal', 'full', 'extra'],
+		temp_store: ['default', 'file', 'memory'],
 	}
 
 	const PRAGMA_DEFAULT_VALUES = {
@@ -44,7 +48,7 @@ function getPragmasFromEnv(env, logger) {
 		synchronous: 'normal',
 		temp_store: 'memory',
 		mmap_size: 512000000,
-		page_size: undefined // No default
+		page_size: undefined, // No default
 	}
 
 	const pushPragma = (key, value, numeric, defaultValue) => {
@@ -59,58 +63,54 @@ function getPragmasFromEnv(env, logger) {
 		}
 	}
 
-	pushPragma('busy_timeout',
+	pushPragma(
+		'busy_timeout',
 		env.DHSP_BUSY_TIMEOUT,
 		true,
-		DEFAULT_VALUES.busy_timeout
+		DEFAULT_VALUES.busy_timeout,
 	)
 
-	pushPragma('journal_mode',
-	env.DHSP_JOURNAL_MODE && PRAGMA_VALUES.journal_mode.includes(env.DHSP_JOURNAL_MODE.toLowerCase())
-		? env.DHSP_JOURNAL_MODE
-		: DEFAULT_VALUES.journal_mode
+	pushPragma(
+		'journal_mode',
+		env.DHSP_JOURNAL_MODE &&
+			PRAGMA_VALUES.journal_mode.includes(env.DHSP_JOURNAL_MODE.toLowerCase())
+			? env.DHSP_JOURNAL_MODE
+			: DEFAULT_VALUES.journal_mode,
 	)
 
-	pushPragma('journal_size',
+	pushPragma(
+		'journal_size',
 		env.DHSP_JOURNAL_SIZE,
 		true,
-		DEFAULT_VALUES.journal_size
+		DEFAULT_VALUES.journal_size,
 	)
 
-	pushPragma('cache_size',
-		env.DHSP_CACHE_SIZE,
-		true,
-		DEFAULT_VALUES.cache_size
+	pushPragma('cache_size', env.DHSP_CACHE_SIZE, true, DEFAULT_VALUES.cache_size)
+
+	pushPragma(
+		'synchronous',
+		env.DHSP_SYNCHRONOUS &&
+			PRAGMA_VALUES.synchronous.includes(env.DHSP_SYNCHRONOUS.toLowerCase())
+			? env.DHSP_SYNCHRONOUS
+			: DEFAULT_VALUES.synchronous,
 	)
 
-	pushPragma('synchronous',
-	env.DHSP_SYNCHRONOUS && PRAGMA_VALUES.synchronous.includes(env.DHSP_SYNCHRONOUS.toLowerCase())
-		? env.DHSP_SYNCHRONOUS
-		: DEFAULT_VALUES.synchronous
+	pushPragma(
+		'temp_store',
+		env.DHSP_TEMP_STORE &&
+			PRAGMA_VALUES.temp_store.includes(env.DHSP_TEMP_STORE.toLowerCase())
+			? env.DHSP_TEMP_STORE
+			: DEFAULT_VALUES.temp_store,
 	)
 
-	pushPragma('temp_store',
-	env.DHSP_TEMP_STORE && PRAGMA_VALUES.temp_store.includes(env.DHSP_TEMP_STORE.toLowerCase())
-		? env.DHSP_TEMP_STORE
-		: DEFAULT_VALUES.temp_store
-	)
+	pushPragma('mmap_size', env.DHSP_MMAP_SIZE, true, DEFAULT_VALUES.mmap_size)
 
-	pushPragma('mmap_size',
-		env.DHSP_MMAP_SIZE,
-		true,
-		DEFAULT_VALUES.mmap_size
-	)
-
-	pushPragma('page_size',
-		env.DHSP_PAGE_SIZE,
-		true,
-		DEFAULT_VALUES.page_size
-	)
+	pushPragma('page_size', env.DHSP_PAGE_SIZE, true, DEFAULT_VALUES.page_size)
 
 	return pragmas
 }
 
-export default async (_, {database, logger, env}) => {
+export default async (_, { database, logger, env }) => {
 	// Skip we are not using sqlite3.
 	if (database.client.config.client !== 'sqlite3') return
 
@@ -134,14 +134,16 @@ export default async (_, {database, logger, env}) => {
 		conn = await acquire.promise
 
 		// Run the SQL commands!
-		await Promise.all(pragmas.map((pragma) => {
-			return new Promise((resolve, reject) => {
-				conn.run(pragma, (error) => {
-					if (error) reject(error)
-					else resolve()
+		await Promise.all(
+			pragmas.map((pragma) => {
+				return new Promise((resolve, reject) => {
+					conn.run(pragma, (error) => {
+						if (error) reject(error)
+						else resolve()
+					})
 				})
-			})
-		}))
+			}),
+		)
 
 		// Great success!
 		logger.info('Successfully loaded perf settings for SQLite.')
