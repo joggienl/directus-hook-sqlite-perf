@@ -125,17 +125,29 @@ function getPragmasFromEnv(env, logger) {
 	return pragmas
 }
 
+async function setPragmasOnConnection(connection, env, logger) {
+	const pragmas = getPragmasFromEnv(env, logger)
+
+	logger.debug(pragmas)
+
+	return await Promise.all(
+		pragmas.map((pragma) => {
+			return new Promise((resolve, reject) => {
+				connection.run(pragma, (error) => {
+					if (error) reject(error)
+					else resolve()
+				})
+			})
+		}),
+	)
+}
+
 export default async (_, { database, logger, env }) => {
 	// Skip we are not using sqlite3.
 	if (database.client.config.client !== 'sqlite3') return
 
 	// Check the current configuration
 	checkKnexConfig(database, logger)
-
-	// Get values or set defaults for the settings we want to set.
-	const pragmas = getPragmasFromEnv(env, logger)
-
-	logger.debug(pragmas)
 
 	// Acquire our database pool
 	const pool = database.client.pool
@@ -149,16 +161,7 @@ export default async (_, { database, logger, env }) => {
 		conn = await acquire.promise
 
 		// Run the SQL commands!
-		await Promise.all(
-			pragmas.map((pragma) => {
-				return new Promise((resolve, reject) => {
-					conn.run(pragma, (error) => {
-						if (error) reject(error)
-						else resolve()
-					})
-				})
-			}),
-		)
+		setPragmasOnConnection(conn, env, logger)
 
 		// Great success!
 		logger.info('Successfully loaded perf settings for SQLite.')
