@@ -140,6 +140,9 @@ export default async (_, {database, logger, env}) => {
 		process.env.DHSP_DEBUG === true ||
 		process.env.DHSP_DEBUG === 1
 
+	// Check the current configuration
+	checkKnexConfig(database, logger)
+
 	// Acquire our database pool
 	const pool = database.client.pool
 	const acquire = pool.acquire()
