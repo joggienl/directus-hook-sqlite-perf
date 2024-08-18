@@ -6,16 +6,16 @@ achieves this by tuning various performance parameters. This document will guide
 you through what each of these performance tunings means and how you can install
 and use them effectively.
 
-- [Installation](#installation)
-	- [NPM, Docker and Docker Compose](#npm-docker-and-docker-compose)
-	- [Marketplace (not advised)](#marketplace-not-advised)
-- [Configuration](#configuration)
-	- [Journal Mode](#Journal-Mode)
-	- [Synchronous Commit](#Synchronous-Commit)
-	- [Temporary files location](#Temporary-files-location)
-	- [Enable memory mapping](#Enable-memory-mapping)
-	- [Increase the page size](#Increase-the-page-size)
-- [Conclusion and Contributions](#conclusion-and-contributions)
+-   [Installation](#installation)
+    -   [NPM, Docker and Docker Compose](#npm-docker-and-docker-compose)
+    -   [Marketplace (not advised)](#marketplace-not-advised)
+-   [Configuration](#configuration)
+    -   [Journal Mode](#Journal-Mode)
+    -   [Synchronous Commit](#Synchronous-Commit)
+    -   [Temporary files location](#Temporary-files-location)
+    -   [Enable memory mapping](#Enable-memory-mapping)
+    -   [Increase the page size](#Increase-the-page-size)
+-   [Conclusion and Contributions](#conclusion-and-contributions)
 
 Remember: all commands executed by this extension will be done for every
 connection made to the database. This is default behaviour for SQLite databases.
@@ -24,8 +24,7 @@ connection made to the database. This is default behaviour for SQLite databases.
 
 You can either use the marketplace or npm to install this extension. Please read
 the [Marketplace](#marketplace-not-advised) section below on how to get the
-extension to
-show up.
+extension to show up.
 
 ### NPM, Docker and Docker Compose
 
@@ -44,7 +43,7 @@ installs the extension via pnpm. This is well documented in the official
 directus documentation.
 
 ```dockerfile
-FROM directus/directus:10.13.1
+FROM directus/directus:11.0.2
 LABEL authors="Some Name <someone@someone.com>"
 
 USER root
@@ -55,7 +54,7 @@ EOF
 
 USER node
 
-RUN pnpm install directus-hook-sqlite-perf
+RUN pnpm install directus-hook-sqlite-perf@1.1.0
 ```
 
 When using docker compose you can easily point to this dockerfile and build your
@@ -66,18 +65,18 @@ contents of docker-compose.yml could look like this:
 
 ```yaml
 services:
-  directus:
-  build:
-    context: .
-  restart: unless-stopped
-  ports:
-    - '8055:8055'
-  volumes:
-    - ./data/database:/directus/database
-    - ./data/extensions:/directus/extensions
-  environment:
-    SECRET: 'some-secret-key-here'
-    DB_CLIENT: 'sqlite3'
+    directus:
+    build:
+        context: .
+    restart: unless-stopped
+    ports:
+        - '8055:8055'
+    volumes:
+        - ./data/database:/directus/database
+        - ./data/extensions:/directus/extensions
+    environment:
+        SECRET: 'some-secret-key-here'
+        DB_CLIENT: 'sqlite3'
 ```
 
 To build the image, you "just" have to execute `docker compose build` to do so.
@@ -85,9 +84,9 @@ To build the image, you "just" have to execute `docker compose build` to do so.
 Note that this project also ships with an example docker-compose and even
 dockerfile. Check the [directus](./directus) directory for more details on that.
 
-Please also check the directus docs
-on [docs.directus.io](https://docs.directus.io)
-for more tips and examples on how to install and
+Please also check the directus docs on
+[docs.directus.io](https://docs.directus.io) for more tips and examples on how
+to install and
 [manage extensions](https://docs.directus.io/extensions/installing-extensions.html).
 
 ### Marketplace (not advised)
@@ -111,6 +110,29 @@ MARKETPLACE_TRUST=all
 
 ## Configuration
 
+### Busy timeout
+
+The Busy Timeout setting configures the duration SQLite will wait before
+throwing a `SQLITE_BUSY` error. By default, this value is set to `0`, meaning no
+wait time. This default setting can lead to `SQLITE_BUSY` errors when multiple
+applications or threads try to write to the database simultaneously, especially
+in WAL mode.
+
+To mitigate this, the extension sets the `busy_timeout` to 30 seconds (30000
+milliseconds) by default, providing ample time for ongoing operations to
+complete and reducing the likelihood of encountering `SQLITE_BUSY` errors.
+
+```sql
+pragma busy_timeout = 30000;
+```
+
+To change the setting of `busy_timeout` use the environment variable
+`DHSP_BUSY_TIMEOUT`:
+
+```dotenv
+DHSP_BUSY_TIMEOUT=30000
+```
+
 ### Journal Mode
 
 SQLite includes a feature called WAL mode (Write-Ahead Logging), which allows
@@ -133,6 +155,66 @@ To change the setting of `journal_mode` use the environment variable
 
 ```dotenv
 DHSP_JOURNAL_MODE=wal
+```
+
+### Journal Size
+
+The `journal_size` parameter in SQLite determines the maximum size of the
+rollback journal. This is particularly important when the database operates in
+modes that involve significant journaling, like WAL mode.
+
+A rollback journal is essential for maintaining database integrity during
+transactions. However, if the journal grows too large, it may consume
+significant disk space and impact performance. By setting a maximum journal
+size, you can control the amount of disk space used by the journal and
+potentially improve the overall performance and responsiveness of the database.
+
+The default journal size may not be optimal for all applications. Adjusting this
+value allows you to balance between performance and disk usage based on your
+specific requirements.
+
+This extension will set the default for `journal_size` to 5MB.
+
+```sql
+pragma journal_size = wal;
+```
+
+To change the setting of `journal_size` use the environment variable
+`DHSP_JOURNAL_SIZE`:
+
+```dotenv
+DHSP_JOURNAL_SIZE=5242880
+```
+
+### Cache Size
+
+The `cache_size` parameter in SQLite determines the maximum number of database
+pages the cache can hold in memory at any given time. This setting is crucial
+for database performance, as it affects how much of the database can be kept in
+memory, thereby reducing the need for disk I/O operations.
+
+When the cache size is larger, more database pages can be stored in memory,
+leading to faster query responses and improved overall performance, especially
+for read-heavy and repetitive operations. However, setting the cache size too
+high can consume a significant amount of memory, which may not be desirable in
+environments with limited RAM.
+
+By configuring the `cache_size`, you can optimize memory usage based on the
+available resources and workload characteristics of your application.
+
+A negative value for `cache_size` specifies the size in kilobytes, whereas a
+positive value specifies the number of pages. The example above sets the cache
+to be 20000 KB (about 20 MB).
+
+```sql
+pragma cache_size = -20000;
+```
+
+To change the setting of `cache_size` use the environment variable
+`DHSP_CACHE_SIZE`:
+
+```dotenv
+DHSP_CACHE_SIZE=-20000
 ```
 
 ### Synchronous Commit
@@ -217,8 +299,7 @@ Setting the value will be done with the PRAGMA instruction:
 pragma page_size = 32768;
 ```
 
-To set the value of `page_size` use the environment variable
-`DHSP_PAGE_SIZE`:
+To set the value of `page_size` use the environment variable `DHSP_PAGE_SIZE`:
 
 ```dotenv
 DHSP_PAGE_SIZE=32768
